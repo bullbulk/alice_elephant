@@ -33,7 +33,7 @@ def main():
         }
     }
 
-    if handle_dialog(request.json, response, 'слон'):
+    if handle_dialog(request.json, response, 'слон', False):
         handle_dialog(request.json, response, 'кролик')
 
     logging.info(f'Response:  {response!r}')
