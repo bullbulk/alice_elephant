@@ -41,7 +41,7 @@ def main():
     return json.dumps(response)
 
 
-def handle_dialog(req, res, animal='слон', end_session=True):
+def handle_dialog(req, res, animal='слон', end_session=True, continue_session=False):
     user_id = req['session']['user_id']
 
     if req['session']['new']:
@@ -53,6 +53,17 @@ def handle_dialog(req, res, animal='слон', end_session=True):
             ]
         }
         res['response']['text'] = f'Привет! Купи {animals[animal]["to_buy"]}!'
+        res['response']['buttons'] = get_suggests(user_id, animal)
+        return
+    elif continue_session:
+        sessionStorage[user_id] = {
+            'suggests': [
+                "Не хочу.",
+                "Не буду.",
+                "Отстань!",
+            ]
+        }
+        res['response']['text'] = f'Купи {animals[animal]["to_buy"]}!'
         res['response']['buttons'] = get_suggests(user_id, animal)
         return
 
