@@ -1,7 +1,7 @@
-from flask import Flask, request
+import json
 import logging
 
-import json
+from flask import Flask, request
 
 app = Flask(__name__)
 
@@ -9,6 +9,16 @@ logging.basicConfig(level=logging.DEBUG)
 
 sessionStorage = {}
 
+animals = {
+    'слон': {
+        'to_buy': 'слона',
+        'url': "https://market.yandex.ru/search?text=слон"
+    },
+    'кролик': {
+        'to_buy': 'кролика',
+        'url': "https://market.yandex.ru/search?text=кролик"
+    }
+}
 
 @app.route('/post', methods=['POST'])
 def main():
@@ -22,18 +32,18 @@ def main():
         }
     }
 
-    handle_dialog(request.json, response)
+    if handle_dialog(request.json, response, 'слон'):
+        handle_dialog(request.json, response, 'кролик')
 
     logging.info(f'Response:  {response!r}')
 
     return json.dumps(response)
 
 
-def handle_dialog(req, res):
+def handle_dialog(req, res, animal='слон', end_session=True):
     user_id = req['session']['user_id']
 
     if req['session']['new']:
-
         sessionStorage[user_id] = {
             'suggests': [
                 "Не хочу.",
@@ -41,30 +51,29 @@ def handle_dialog(req, res):
                 "Отстань!",
             ]
         }
-        res['response']['text'] = 'Привет! Купи слона!'
-        res['response']['buttons'] = get_suggests(user_id)
+        res['response']['text'] = f'Привет! Купи {animals[animal]["to_buy"]}!'
+        res['response']['buttons'] = get_suggests(user_id, animals[animal]['to_buy'])
         return
 
-    if req['request']['original_utterance'].lower() in [
+    original_command = req['request']['original_utterance'].lower()
+
+    if original_command in [
         'ладно',
         'куплю',
         'покупаю',
-        'хорошо',
-        'я куплю',
-        'я покупаю'
-    ]:
-        # Пользователь согласился, прощаемся.
-        res['response']['text'] = 'Слона можно найти на Яндекс.Маркете!'
-        res['response']['end_session'] = True
-        return
+        'хорошо'
+    ] or 'покупаю' in original_command or 'куплю' in original_command:
+        res['response']['text'] = f'{animals[animal]["to_buy"].capitalize()} можно найти на Яндекс.Маркете!'
+        res['response']['end_session'] = end_session
+        return True
 
     # Если нет, то убеждаем его купить слона!
     res['response']['text'] = \
-        f"Все говорят '{req['request']['original_utterance']}', а ты купи слона!"
-    res['response']['buttons'] = get_suggests(user_id)
+        f"Все говорят '{req['request']['original_utterance']}', а ты купи {animals[animal]['to_buy']}!"
+    res['response']['buttons'] = get_suggests(user_id, animals[animal]['to_buy'])
 
 
-def get_suggests(user_id):
+def get_suggests(user_id, animal):
     session = sessionStorage[user_id]
     suggests = [
         {'title': suggest, 'hide': True}
@@ -77,7 +86,7 @@ def get_suggests(user_id):
     if len(suggests) < 2:
         suggests.append({
             "title": "Ладно",
-            "url": "https://market.yandex.ru/search?text=слон",
+            "url": animals[animal]['url'],
             "hide": True
         })
 
