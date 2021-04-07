@@ -20,6 +20,7 @@ animals = {
     }
 }
 
+
 @app.route('/post', methods=['POST'])
 def main():
     logging.info(f'Request: {request.json!r}')
@@ -52,7 +53,7 @@ def handle_dialog(req, res, animal='слон', end_session=True):
             ]
         }
         res['response']['text'] = f'Привет! Купи {animals[animal]["to_buy"]}!'
-        res['response']['buttons'] = get_suggests(user_id, animals[animal]['to_buy'])
+        res['response']['buttons'] = get_suggests(user_id, animal)
         return
 
     original_command = req['request']['original_utterance'].lower()
@@ -70,7 +71,7 @@ def handle_dialog(req, res, animal='слон', end_session=True):
     # Если нет, то убеждаем его купить слона!
     res['response']['text'] = \
         f"Все говорят '{req['request']['original_utterance']}', а ты купи {animals[animal]['to_buy']}!"
-    res['response']['buttons'] = get_suggests(user_id, animals[animal]['to_buy'])
+    res['response']['buttons'] = get_suggests(user_id, animal)
 
 
 def get_suggests(user_id, animal):
